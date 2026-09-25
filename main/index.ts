@@ -1,8 +1,5 @@
 import {app} from 'electron';
 import {is, enforceMacOSAppLocation} from 'electron-util';
-import log from 'electron-log';
-import {autoUpdater} from 'electron-updater';
-import toMilliseconds from '@sindresorhus/to-milliseconds';
 
 import './windows/load';
 import './utils/sentry';
@@ -54,30 +51,6 @@ const initializePlugins = async () => {
   }
 };
 
-const checkForUpdates = () => {
-  if (is.development) {
-    return false;
-  }
-
-  const checkForUpdates = async () => {
-    try {
-      await autoUpdater.checkForUpdates();
-    } catch (error) {
-      autoUpdater.logger?.error(error);
-    }
-  };
-
-  // For auto-update debugging in Console.app
-  autoUpdater.logger = log;
-  // @ts-expect-error
-  autoUpdater.logger.transports.file.level = 'info';
-
-  setInterval(checkForUpdates, toMilliseconds({hours: 1}));
-
-  checkForUpdates();
-  return true;
-};
-
 // Prepare the renderer once the app is ready
 (async () => {
   await app.whenReady();
@@ -120,8 +93,6 @@ const checkForUpdates = () => {
   ) {
     windowManager.cropper?.open();
   }
-
-  checkForUpdates();
 })();
 
 app.on('window-all-closed', (event: any) => {
