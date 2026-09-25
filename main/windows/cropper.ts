@@ -6,7 +6,7 @@ import delay from 'delay';
 import {settings} from '../common/settings';
 import {hasMicrophoneAccess, ensureMicrophonePermissions, openSystemPreferences, ensureScreenCapturePermissions} from '../common/system-permissions';
 import {loadRoute} from '../utils/routes';
-import {MacWindow} from '../utils/windows';
+import {MacWindow, getSettledWindowFrame} from '../utils/windows';
 
 const croppers = new Map<number, BrowserWindow>();
 let notificationId: number | undefined;
@@ -55,6 +55,15 @@ const openCropper = (display: Display, activeDisplayId?: number) => {
   loadRoute(cropper, 'cropper');
 
   cropper.setAlwaysOnTop(true, 'screen-saver', 1);
+
+  // The renderer measures the selection relative to the cropper window and aperture records it relative to the display,
+  // so the cropper must cover the display exactly. With Stage Manager enabled, macOS moves the window down by 16-20px when it is shown.
+  cropper.on('move', () => {
+    const current = cropper.getBounds();
+    if (current.x !== x || current.y !== y || current.width !== width || current.height !== height) {
+      cropper.setBounds(bounds);
+    }
+  });
 
   cropper.webContents.on('did-finish-load', () => {
     const isActive = activeDisplayId === id;
@@ -182,13 +191,13 @@ const selectApp = async (window: MacWindow, activateWindow: (ownerName: string) 
 
   await activateWindow(window.ownerName);
 
-  const {x, y, width, height, ownerName} = window;
+  // For some reason this happened a bit too early without the timeout
+  await delay(300);
+
+  const {x, y, width, height, ownerName} = await getSettledWindowFrame(window);
 
   const display = screen.getDisplayMatching({x, y, width, height});
   const {id, bounds: {x: screenX, y: screenY}} = display;
-
-  // For some reason this happened a bit too early without the timeout
-  await delay(300);
 
   for (const cropper of croppers.values()) {
     cropper.removeListener('blur', preventDefault);

@@ -1,5 +1,6 @@
 import {Menu, MenuItem, nativeImage} from 'electron';
 import Store from 'electron-store';
+import delay from 'delay';
 import {windowManager} from '../windows/manager';
 
 const {getWindows, activateWindow} = require('mac-windows');
@@ -18,7 +19,9 @@ export interface MacWindow {
 
 const APP_BLACKLIST = [
   'Kap',
-  'Kap Beta'
+  'Kap Beta',
+  // Stage Manager overlays in the side strip
+  'WindowManager'
 ];
 
 const store = new Store<{
@@ -72,6 +75,32 @@ const getWindowList = async () => {
 
     return b.count - a.count;
   });
+};
+
+const hasSameFrame = (a: MacWindow, b: MacWindow) => a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+
+// With Stage Manager enabled, the window list reports the windows in the side strip at the frame of their thumbnail.
+// Activating the app moves its window to the stage, so read the frame again until it stops changing.
+export const getSettledWindowFrame = async (window: MacWindow) => {
+  let previous: MacWindow | undefined;
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const windows = await getWindows({showAllWindows: true}) as MacWindow[];
+    const current = windows.find(win => win.number === window.number);
+
+    if (!current) {
+      return previous ?? window;
+    }
+
+    if (previous && hasSameFrame(previous, current)) {
+      return current;
+    }
+
+    previous = current;
+    await delay(150);
+  }
+
+  return previous ?? window;
 };
 
 export const buildWindowsMenu = async (selected: string) => {
