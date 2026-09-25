@@ -13,6 +13,7 @@ import {ApertureOptions, StartRecordingOptions} from './common/types';
 import {InstalledPlugin} from './plugins/plugin';
 import {RecordService, RecordServiceHook} from './plugins/service';
 import {getCurrentDurationStart, getOverallDuration, setCurrentDurationStart, setOverallDuration} from './utils/track-duration';
+import {preloadApps} from './plugins/built-in/open-with-plugin';
 
 const createAperture = require('aperture');
 const aperture = createAperture();
@@ -168,6 +169,10 @@ export const startRecording = async (options: StartRecordingOptions) => {
   setRecordingTray();
   setCropperShortcutAction(stopRecording);
   past = Date.now();
+
+  // The editor shows the Open With apps after the recording. Listing them blocks the main process for about half a second,
+  // so it runs now, while the cropper does not need to respond.
+  preloadApps();
 
   // Track aperture errors after recording has started, to avoid kap freezing if something goes wrong
   aperture.recorder.catch((error: any) => {

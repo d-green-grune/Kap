@@ -3,7 +3,7 @@ import {EditorOptionsRemoteState, ExportOptions, ExportOptionsPlugin, Format, Re
 import {formats} from '../common/constants';
 
 import {plugins} from '../plugins';
-import {apps} from '../plugins/built-in/open-with-plugin';
+import {getApps} from '../plugins/built-in/open-with-plugin';
 import {prettifyFormat} from '../utils/formats';
 
 const exportUsageHistory = new Store<{[key in Format]: {lastUsed: number; plugins: Record<string, number>}}>({
@@ -90,7 +90,7 @@ const getExportOptions = () => {
           title: service.title,
           pluginName: plugin.name,
           pluginPath: plugin.pluginPath,
-          apps: plugin.name === '_openWith' ? apps.get(format) : undefined,
+          apps: plugin.name === '_openWith' ? getApps().get(format) : undefined,
           lastUsed: exportUsageHistory.get(format).plugins?.[plugin.name] ?? 0
         });
       }
@@ -101,16 +101,24 @@ const getExportOptions = () => {
 };
 
 const editorOptionsRemoteState: RemoteStateHandler<EditorOptionsRemoteState> = sendUpdate => {
-  const state: ExportOptions = {
-    formats: getExportOptions(),
-    editServices: getEditOptions(),
-    fpsHistory: fpsUsageHistory.store
+  // The export options include the apps of the Open With plugin, which are slow to list, so the state is built on first use
+  let state: ExportOptions | undefined;
+
+  const getState = () => {
+    state ??= {
+      formats: getExportOptions(),
+      editServices: getEditOptions(),
+      fpsHistory: fpsUsageHistory.store
+    };
+
+    return state;
   };
 
   const updatePlugins = () => {
-    state.formats = getExportOptions();
-    state.editServices = getEditOptions();
-    sendUpdate(state);
+    const current = getState();
+    current.formats = getExportOptions();
+    current.editServices = getEditOptions();
+    sendUpdate(current);
   };
 
   plugins.on('installed', updatePlugins);
@@ -126,19 +134,21 @@ const editorOptionsRemoteState: RemoteStateHandler<EditorOptionsRemoteState> = s
       usage.lastUsed = now;
       exportUsageHistory.set(format, usage);
 
-      state.formats = getExportOptions();
-      sendUpdate(state);
+      const current = getState();
+      current.formats = getExportOptions();
+      sendUpdate(current);
     },
     updateFpsUsage: (_: string, {format, fps}: {format: Format; fps: number}) => {
       fpsUsageHistory.set(format, fps);
-      state.fpsHistory = fpsUsageHistory.store;
-      sendUpdate(state);
+      const current = getState();
+      current.fpsHistory = fpsUsageHistory.store;
+      sendUpdate(current);
     }
   };
 
   return {
     actions,
-    getState: () => state
+    getState
   };
 };
 

@@ -17,30 +17,56 @@ export interface App {
   name: string;
 }
 
-const getAppsForFormat = (format: Format) => {
-  return (getAppsThatOpenExtension.sync(getFormatExtension(format)) as App[])
-    .map(app => ({...app, name: decodeURI(path.parse(app.url).name)}))
-    .filter(app => !['Kap', 'Kap Beta'].includes(app.name))
-    .sort((a, b) => {
-      if (a.isDefault !== b.isDefault) {
-        return Number(b.isDefault) - Number(a.isDefault);
-      }
+const openWithFormats = ['mp4', 'gif', 'apng', 'webm', 'av1', 'hevc'] as Format[];
 
-      return Number(b.name === 'Gifski') - Number(a.name === 'Gifski');
-    });
+const sortApps = (apps: App[]) => apps
+  .map(app => ({...app, name: decodeURI(path.parse(app.url).name)}))
+  .filter(app => !['Kap', 'Kap Beta'].includes(app.name))
+  .sort((a, b) => {
+    if (a.isDefault !== b.isDefault) {
+      return Number(b.isDefault) - Number(a.isDefault);
+    }
+
+    return Number(b.name === 'Gifski') - Number(a.name === 'Gifski');
+  });
+
+const toAppsMap = (entries: Array<[Format, App[]]>) => new Map(entries.filter(([, apps]) => apps.length > 0));
+
+// Listing the apps runs the `open-with` helper once for each format, which takes about a second in total.
+// The list is loaded on first use instead of when the plugin loads, so that it does not delay the launch.
+let appsForFormat: Map<Format, App[]> | undefined;
+
+export const getApps = () => {
+  appsForFormat ??= toAppsMap(openWithFormats.map(format => [
+    format,
+    sortApps(getAppsThatOpenExtension.sync(getFormatExtension(format)) as App[])
+  ]));
+
+  return appsForFormat;
 };
 
-const appsForFormat = (['mp4', 'gif', 'apng', 'webm', 'av1', 'hevc'] as Format[])
-  .map(format => ({
-    format,
-    apps: getAppsForFormat(format)
-  }))
-  .filter(({apps}) => apps.length > 0);
+// Loads the list without blocking the main process, so that the editor does not wait for it later
+export const preloadApps = async () => {
+  if (appsForFormat) {
+    return;
+  }
 
-export const apps = new Map(appsForFormat.map(({format, apps}) => [format, apps]));
+  try {
+    const entries = await Promise.all(openWithFormats.map(async (format): Promise<[Format, App[]]> => [
+      format,
+      sortApps(await getAppsThatOpenExtension(getFormatExtension(format)) as App[])
+    ]));
+
+    appsForFormat ??= toAppsMap(entries);
+  } catch {
+    // `getApps()` loads the list again when the editor needs it
+  }
+};
 
 export const shareServices = [{
   title: 'Open With',
-  formats: [...apps.keys()],
+  get formats() {
+    return [...getApps().keys()];
+  },
   action
 }];
