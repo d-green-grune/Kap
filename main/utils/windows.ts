@@ -1,6 +1,9 @@
-import {app, Menu, MenuItem} from 'electron';
+import {Menu, MenuItem, nativeImage} from 'electron';
+import path from 'path';
 import Store from 'electron-store';
 import delay from 'delay';
+import execa from 'execa';
+import {fixPathForAsarUnpack} from 'electron-util';
 import {windowManager} from '../windows/manager';
 
 const {getWindows, activateWindow} = require('mac-windows');
@@ -14,7 +17,6 @@ export interface MacWindow {
   x: number;
   y: number;
   number: number;
-  path?: string;
 }
 
 const APP_BLACKLIST = [
@@ -37,29 +39,30 @@ const usageHistory = store.get('appUsageHistory', {});
 
 const isValidApp = ({ownerName}: MacWindow) => !APP_BLACKLIST.includes(ownerName);
 
-// Reads the icon in this process. Starting a helper process for each app blocked the main process for up to a second.
-const getAppIcon = async (window: MacWindow) => {
-  if (!window.path) {
-    return undefined;
-  }
+const macWindowsBinary = fixPathForAsarUnpack(path.join(path.dirname(require.resolve('mac-windows')), 'scripts/MacWindows'));
 
+// Reads the icons of all apps with one helper process. Starting one process for each app blocked the main process for up to a second,
+// and `app.getFileIcon()` returns the generic app icon for every app on macOS.
+const getAppIcons = async (pids: number[]) => {
   try {
-    return await app.getFileIcon(window.path, {size: 'small'});
+    const {stdout} = await execa(macWindowsBinary, ['--icons', ...new Set(pids.map(pid => String(pid)))]);
+    const icons = JSON.parse(stdout) as Record<string, string>;
+    return new Map(Object.entries(icons).map(([pid, png]) => [Number(pid), nativeImage.createFromBuffer(Buffer.from(png, 'base64'), {scaleFactor: 2})]));
   } catch {
-    return undefined;
+    return new Map<number, Electron.NativeImage>();
   }
 };
 
 const getWindowList = async () => {
   const windows = (await getWindows() as MacWindow[]).filter(window => isValidApp(window));
-  const icons = await Promise.all(windows.map(async window => getAppIcon(window)));
+  const icons = await getAppIcons(windows.map(window => window.pid));
 
   let maxLastUsed = 0;
 
-  return windows.map((win, index) => {
+  return windows.map(win => {
     const window = {
       ...win,
-      icon: icons[index],
+      icon: icons.get(win.pid),
       count: 0,
       lastUsed: 0,
       ...usageHistory[win.pid]

@@ -4,7 +4,7 @@ These are the sources of the helper binaries that some npm dependencies run. The
 
 | Directory | Replaces | Source |
 | --- | --- | --- |
-| `mac-windows` | `node_modules/mac-windows/scripts/MacWindows` | [karaggeorge/mac-windows](https://github.com/karaggeorge/mac-windows) 1.0.0 (MIT) |
+| `mac-windows` | `node_modules/mac-windows/scripts/MacWindows` | [karaggeorge/mac-windows](https://github.com/karaggeorge/mac-windows) 1.0.0 (MIT). Adds `--icons <pid>...`, which prints the icons of running apps for the window menu in one process. |
 | `activate-window` | `node_modules/mac-windows/scripts/ActivateWindow` | [karaggeorge/mac-windows](https://github.com/karaggeorge/mac-windows) 1.0.0 (MIT) |
 | `open-with` | `node_modules/mac-open-with/open-with` | [karaggeorge/mac-open-with](https://github.com/karaggeorge/mac-open-with) 1.2.3 (MIT) |
 | `audio-devices` | `node_modules/macos-audio-devices/audio-devices` | [karaggeorge/macos-audio-devices](https://github.com/karaggeorge/macos-audio-devices) (MIT) |
