@@ -5,6 +5,43 @@
   <p align="center"><a href="https://circleci.com/gh/wulkano/kap"><img src="https://circleci.com/gh/wulkano/Kap.svg?style=shield" alt="Build Status"></a> <a href="https://github.com/sindresorhus/xo"><img src="https://img.shields.io/badge/code_style-XO-5ed9c7.svg" alt="XO code style"></a></p>
 </p>
 
+## About this fork
+
+This fork of Kap 3.6.0 runs on macOS 27 on Apple silicon. Upstream Kap is not maintained.
+
+### Changes from upstream
+
+- **Native helper binaries.** Several dependencies (`mac-windows`, `node-mac-app-icon`, `mac-open-with`, `macos-audio-devices`, `mac-screen-capture-permissions`) ship x86_64-only binaries. Without Rosetta they fail with `spawn Unknown system error -86`, and Kap cannot open the recorder. The sources are in [`native/`](native/README.md), and `yarn install` builds them for the build machine.
+- **Screen Recording permission.** The permission check uses `CGPreflightScreenCaptureAccess()` and `CGRequestScreenCaptureAccess()`. The old check used `CGDisplayStream`, which is unavailable in the macOS 27 SDK.
+- **gifsicle 5.3.0.** This version includes an arm64 binary.
+- **Stage Manager alignment.** With Stage Manager enabled, macOS moved the cropper window 16–20 px down, so recordings were offset from the selection. The cropper now stays on the display bounds. When you select an app from the side strip, Kap reads the window frame again after the app moves to the stage.
+- **arm64 only.** macOS 27 does not run on Intel Macs, and `ffmpeg-static` downloads the binary for the build machine only.
+- **No update checks.** The update checker is removed, so an upstream release cannot replace this build.
+
+### Build and install
+
+Requirements: macOS on Apple silicon, Xcode, and Node.js 16 with Yarn 1 (for example through [Volta](https://volta.sh)).
+
+```sh
+volta run --node 16 --yarn 1 yarn install
+volta run --node 16 --yarn 1 yarn run pack
+```
+
+Use `yarn run pack`. `yarn pack` is a Yarn command that writes a tarball.
+
+The app is written to `dist/mac-arm64/Kap.app`. Quit Kap, and then copy the app to `/Applications`. Kap must be in `/Applications` to start.
+
+To choose the signing identity, set `CSC_NAME`. If the Apple timestamp service is not available, turn off the timestamp for a local build:
+
+```sh
+CSC_NAME="Your Name (TEAMID)" volta run --node 16 --yarn 1 yarn electron-builder --dir -c.mac.timestamp=none
+```
+
+### After you install a new build
+
+- A new signature needs a new Screen Recording permission. In System Settings → Privacy & Security → Screen & System Audio Recording, remove the old Kap entry, open Kap, and turn on Kap in the list. Then quit and open Kap again.
+- Plugins are installed from npm into `~/Library/Application Support/Kap/plugins` and are not changed by this fork. Plugins that include x86_64-only binaries fail with error -86 unless Rosetta is installed. For example, `kap-do-not-disturb`, `kap-hide-desktop-icons`, and `kap-key-cast` fail.
+
 [![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://vshymanskyy.github.io/StandWithUkraine/)
 
 ## Get Kap
