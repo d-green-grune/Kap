@@ -33,7 +33,6 @@ build() {
 
 build mac-windows mac-windows mac-windows/scripts/MacWindows
 build activate-window activate-window mac-windows/scripts/ActivateWindow
-build get-app-icon GetAppIcon node-mac-app-icon/run
 build open-with open-with mac-open-with/open-with
 build audio-devices audio-devices macos-audio-devices/audio-devices
 build screen-capture-permissions screen-capture-permissions mac-screen-capture-permissions/screen-capture-permissions

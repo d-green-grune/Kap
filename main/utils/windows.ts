@@ -1,10 +1,9 @@
-import {Menu, MenuItem, nativeImage} from 'electron';
+import {app, Menu, MenuItem} from 'electron';
 import Store from 'electron-store';
 import delay from 'delay';
 import {windowManager} from '../windows/manager';
 
 const {getWindows, activateWindow} = require('mac-windows');
-const {getAppIconListByPid} = require('node-mac-app-icon');
 
 export interface MacWindow {
   pid: number;
@@ -15,6 +14,7 @@ export interface MacWindow {
   x: number;
   y: number;
   number: number;
+  path?: string;
 }
 
 const APP_BLACKLIST = [
@@ -37,26 +37,29 @@ const usageHistory = store.get('appUsageHistory', {});
 
 const isValidApp = ({ownerName}: MacWindow) => !APP_BLACKLIST.includes(ownerName);
 
+// Reads the icon in this process. Starting a helper process for each app blocked the main process for up to a second.
+const getAppIcon = async (window: MacWindow) => {
+  if (!window.path) {
+    return undefined;
+  }
+
+  try {
+    return await app.getFileIcon(window.path, {size: 'small'});
+  } catch {
+    return undefined;
+  }
+};
+
 const getWindowList = async () => {
-  const windows = await getWindows() as MacWindow[];
-  const images = await getAppIconListByPid(windows.map(win => win.pid), {
-    size: 16,
-    failOnError: false
-  }) as Array<{
-    pid: number;
-    icon: Buffer;
-  }>;
+  const windows = (await getWindows() as MacWindow[]).filter(window => isValidApp(window));
+  const icons = await Promise.all(windows.map(async window => getAppIcon(window)));
 
   let maxLastUsed = 0;
 
-  return windows.filter(window => isValidApp(window)).map(win => {
-    const iconImage = images.find(img => img.pid === win.pid);
-    const icon = iconImage?.icon ? nativeImage.createFromBuffer(iconImage.icon) : undefined;
-
+  return windows.map((win, index) => {
     const window = {
       ...win,
-      icon2x: icon,
-      icon: icon?.resize({width: 16, height: 16}),
+      icon: icons[index],
       count: 0,
       lastUsed: 0,
       ...usageHistory[win.pid]

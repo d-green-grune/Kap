@@ -25,26 +25,15 @@ const mainStyle = css`
 const MainControls = {};
 
 const remote = electron.remote || false;
-let menu;
-
-const buildMenu = async ({selectedApp}) => {
-  const {buildWindowsMenu} = remote.require('./utils/windows');
-  menu = await buildWindowsMenu(selectedApp);
-};
 
 class Left extends React.Component {
-  state = {};
-
-  static getDerivedStateFromProps(nextProps, previousState) {
-    const {selectedApp} = nextProps;
-
-    if (selectedApp !== previousState.selectedApp) {
-      buildMenu({selectedApp});
-      return {selectedApp};
-    }
-
-    return null;
-  }
+  // The menu lists the open windows, so it is built when it opens.
+  // Building it when each cropper rendered delayed the cropper launch and showed an outdated list.
+  openMenu = async options => {
+    const {buildWindowsMenu} = remote.require('./utils/windows');
+    const menu = await buildWindowsMenu(this.props.selectedApp);
+    menu.popup(options);
+  };
 
   render() {
     const {toggleAdvanced, selectedApp, advanced} = this.props;
@@ -54,7 +43,7 @@ class Left extends React.Component {
         <div className="crop">
           <CropIcon tabIndex={advanced ? -1 : 0} onClick={toggleAdvanced}/>
         </div>
-        <IconMenu isMenu icon={ApplicationsIcon} tabIndex={advanced ? -1 : 0} active={Boolean(selectedApp)} onOpen={menu && menu.popup}/>
+        <IconMenu isMenu icon={ApplicationsIcon} tabIndex={advanced ? -1 : 0} active={Boolean(selectedApp)} onOpen={this.openMenu}/>
         <style jsx>{mainStyle}</style>
         <style jsx>{`
           .crop {

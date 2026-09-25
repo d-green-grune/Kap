@@ -9,10 +9,24 @@ struct Window {
   var width = 0
   var height = 0
   var number = 0
+  var path = ""
 
   func convertToDictionary() -> [String : Any] {
-    return ["pid": self.pid, "ownerName": self.ownerName, "name": self.name, "x": self.x, "y": self.y, "width": self.width, "height": self.height, "number": self.number]
+    return ["pid": self.pid, "ownerName": self.ownerName, "name": self.name, "x": self.x, "y": self.y, "width": self.width, "height": self.height, "number": self.number, "path": self.path]
   }
+}
+
+// Kap reads the app icon from the bundle path, which does not need a helper process for each app
+var bundlePaths: [Int: String] = [:]
+
+func bundlePath(pid: Int) -> String {
+  if let path = bundlePaths[pid] {
+    return path
+  }
+
+  let path = NSRunningApplication(processIdentifier: pid_t(pid))?.bundleURL?.path ?? ""
+  bundlePaths[pid] = path
+  return path
 }
 
 func getWindows(onScreenOnly: Bool) -> [Window] {
@@ -62,7 +76,7 @@ func getWindows(onScreenOnly: Bool) -> [Window] {
       name = dict.value(forKey: "kCGWindowName") as! String
     }
 
-    windows.append(Window(pid: pid, ownerName: ownerName, name: name, x: x, y: y, width: width, height: height, number: number))
+    windows.append(Window(pid: pid, ownerName: ownerName, name: name, x: x, y: y, width: width, height: height, number: number, path: bundlePath(pid: pid)))
   }
 
   return windows

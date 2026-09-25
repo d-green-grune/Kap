@@ -11,7 +11,7 @@ This fork of Kap 3.6.0 runs on macOS 27 on Apple silicon. Upstream Kap is not ma
 
 ### Changes from upstream
 
-- **Native helper binaries.** Several dependencies (`mac-windows`, `node-mac-app-icon`, `mac-open-with`, `macos-audio-devices`, `mac-screen-capture-permissions`) ship x86_64-only binaries. Without Rosetta they fail with `spawn Unknown system error -86`, and Kap cannot open the recorder. The sources are in [`native/`](native/README.md), and `yarn install` builds them for the build machine.
+- **Native helper binaries.** Several dependencies (`mac-windows`, `mac-open-with`, `macos-audio-devices`, `mac-screen-capture-permissions`) ship x86_64-only binaries. Without Rosetta they fail with `spawn Unknown system error -86`, and Kap cannot open the recorder. The sources are in [`native/`](native/README.md), and `yarn install` builds them for the build machine.
 - **Screen Recording permission.** The permission check uses `CGPreflightScreenCaptureAccess()` and `CGRequestScreenCaptureAccess()`. The old check used `CGDisplayStream`, which is unavailable in the macOS 27 SDK.
 - **gifsicle 5.3.0.** This version includes an arm64 binary.
 - **Stage Manager alignment.** With Stage Manager enabled, macOS moved the cropper window 16–20 px down, so recordings were offset from the selection. The cropper now stays on the display bounds. When you select an app from the side strip, Kap reads the window frame again after the app moves to the stage.

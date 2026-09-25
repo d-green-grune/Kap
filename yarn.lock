@@ -3279,13 +3279,6 @@ electron-util@^0.14.2:
     electron-is-dev "^1.1.0"
     new-github-issue-url "^0.2.1"
 
-electron-util@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/electron-util/-/electron-util-0.4.1.tgz#9d4e832fc0e0df4f96cece6f06c74f809cf7846c"
-  integrity sha512-j+NR4qogEtLdg729w42Uqih7WXVzt4Tgog9hyHGrJkLz0bokPAJ7QLM9N5SFEwgeZEoicyrG17qUKrz442cA5Q==
-  dependencies:
-    electron-is-dev "^0.3.0"
-
 electron-util@^0.8.2:
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/electron-util/-/electron-util-0.8.2.tgz#9ec18f54141192e3fcbfe1d6dfd22780de87ffed"
@@ -3890,19 +3883,6 @@ execa@^0.7.0:
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/execa/-/execa-0.7.0.tgz#944becd34cc41ee32a63a9faf27ad5a65fc59777"
   integrity sha1-lEvs00zEHuMqY6n68nrVpl/Fl3c=
-  dependencies:
-    cross-spawn "^5.0.1"
-    get-stream "^3.0.0"
-    is-stream "^1.1.0"
-    npm-run-path "^2.0.0"
-    p-finally "^1.0.0"
-    signal-exit "^3.0.0"
-    strip-eof "^1.0.0"
-
-execa@^0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/execa/-/execa-0.8.0.tgz#d8d76bbc1b55217ed190fd6dd49d3c774ecfc8da"
-  integrity sha1-2NdrvBtVIX7RkP1t1J08d07PyNo=
   dependencies:
     cross-spawn "^5.0.1"
     get-stream "^3.0.0"
@@ -6586,14 +6566,6 @@ node-libs-browser@^2.2.1:
     url "^0.11.0"
     util "^0.11.0"
     vm-browserify "^1.0.1"
-
-node-mac-app-icon@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/node-mac-app-icon/-/node-mac-app-icon-1.4.0.tgz#2b6d4360f665f626439ecc16b5df6ec160bf1a25"
-  integrity sha512-R+zV2QlD+bWkF60KxWadDiLmafcBUAYcQYGHVJuiWTPJ4eb80kpMtDGt+PysVj5Tw3ip6s77nyXm7nU8ONkwbQ==
-  dependencies:
-    electron-util "^0.4.1"
-    execa "^0.8.0"
 
 node-releases@^1.1.71, node-releases@^1.1.73:
   version "1.1.74"
