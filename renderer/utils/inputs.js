@@ -142,34 +142,7 @@ const buildAspectRatioMenu = ({setRatio, ratio}) => {
     return;
   }
 
-  const {Menu, MenuItem} = remote;
-  const selectedRatio = ratio.join(':');
-  const menu = new Menu();
-
-  for (const r of RATIOS) {
-    menu.append(
-      new MenuItem({
-        label: r,
-        type: 'radio',
-        checked: r === selectedRatio,
-        click: () => setRatio(r.split(':').map(d => Number.parseInt(d, 10)))
-      })
-    );
-  }
-
-  const customOption = RATIOS.includes(selectedRatio) ? {
-    label: 'Custom',
-    type: 'radio',
-    checked: false,
-    enabled: false
-  } : {
-    label: `Custom ${selectedRatio}`,
-    type: 'radio',
-    checked: true
-  };
-
-  menu.append(new MenuItem(customOption));
-  return menu;
+  return remote.require('./menus/aspect-ratio').buildAspectRatioMenu({ratio, ratios: RATIOS, setRatio});
 };
 
 const handleInputKeyPress = (onChange, min, max) => event => {

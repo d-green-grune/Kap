@@ -62,32 +62,18 @@ const AdvancedControls = {};
 const stopPropagation = event => event.stopPropagation();
 
 class Left extends React.Component {
-  state = {};
-
   select = React.createRef();
 
-  static getDerivedStateFromProps(nextProps, previousState) {
-    const {ratio, isResizing, setRatio} = nextProps;
-
-    if (ratio !== previousState.ratio && !isResizing) {
-      return {
-        ratio,
-        menu: buildAspectRatioMenu({setRatio, ratio})
-      };
-    }
-
-    return null;
-  }
-
+  // Building the menu waits for the main process. Building it when it opens, instead of on every render, keeps it out of the cropper launch.
   openMenu = () => {
-    const {ratio} = this.props;
+    const {ratio, setRatio} = this.props;
     const boundingRect = this.select.current.getBoundingClientRect();
     const {top, left} = boundingRect;
     const selectedRatio = ratio.join(':');
     const index = RATIOS.indexOf(selectedRatio);
     const positioningItem = index > -1 ? index : RATIOS.length;
 
-    this.state.menu.popup({
+    buildAspectRatioMenu({setRatio, ratio}).popup({
       x: Math.round(left),
       y: Math.round(top) + 6,
       positioningItem
@@ -177,7 +163,6 @@ Left.propTypes = {
   toggleAdvanced: PropTypes.elementType.isRequired,
   toggleRatioLock: PropTypes.elementType.isRequired,
   ratioLocked: PropTypes.bool,
-  isResizing: PropTypes.bool,
   ratio: PropTypes.array,
   setRatio: PropTypes.elementType.isRequired,
   advanced: PropTypes.bool
@@ -185,7 +170,7 @@ Left.propTypes = {
 
 AdvancedControls.Left = connect(
   [ActionBarContainer, CropperContainer],
-  ({ratioLocked, advanced}, {ratio, isResizing}) => ({advanced, ratio, ratioLocked, isResizing}),
+  ({ratioLocked, advanced}, {ratio}) => ({advanced, ratio, ratioLocked}),
   ({toggleAdvanced, toggleRatioLock}, {setRatio}) => ({toggleAdvanced, toggleRatioLock, setRatio})
 )(Left);
 
