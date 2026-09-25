@@ -48,7 +48,7 @@ export const getAudioDevices = async () => {
   }
 };
 
-export const getDefaultInputDevice = () => {
+const readDefaultInputDevice = () => {
   try {
     const device = audioDevices.getDefaultInputDevice.sync();
     return {
@@ -59,6 +59,18 @@ export const getDefaultInputDevice = () => {
     // Running on 10.13 and don't have swift support libs. No need to report
     return undefined;
   }
+};
+
+// Reading the default device runs a helper process, which blocks the main process. Each cropper window reads it when it opens,
+// so the result is kept for a short time and the windows of one cropper share one read.
+let cachedDefaultInputDevice: {device: ReturnType<typeof readDefaultInputDevice>; expiresAt: number} | undefined;
+
+export const getDefaultInputDevice = () => {
+  if (!cachedDefaultInputDevice || Date.now() > cachedDefaultInputDevice.expiresAt) {
+    cachedDefaultInputDevice = {device: readDefaultInputDevice(), expiresAt: Date.now() + 2000};
+  }
+
+  return cachedDefaultInputDevice.device;
 };
 
 export const getSelectedInputDeviceId = () => {
