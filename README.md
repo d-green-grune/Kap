@@ -17,6 +17,25 @@ This fork of Kap 3.6.0 runs on macOS 27 on Apple silicon. Upstream Kap is not ma
 - **Stage Manager alignment.** With Stage Manager enabled, macOS moved the cropper window 16–20 px down, so recordings were offset from the selection. The cropper now stays on the display bounds. When you select an app from the side strip, Kap reads the window frame again after the app moves to the stage.
 - **arm64 only.** macOS 27 does not run on Intel Macs, and `ffmpeg-static` downloads the binary for the build machine only.
 - **No update checks.** The update checker is removed, so an upstream release cannot replace this build.
+- **Faster launch.** The cropper appears about 3 times faster at launch and about 5 times faster when you open it again. Menus that the cropper built on every render are now built when they open, and the Open With apps are loaded in the background when a recording starts.
+
+### Install from the DMG
+
+Use these steps if someone gave you a `Kap-<version>-arm64.dmg` file. You need a Mac with Apple silicon.
+
+1. Open the DMG and drag Kap to the Applications folder. If an older Kap is open, quit it first.
+2. Open Kap. macOS blocks it, because this build is not notarized by Apple. Close the message.
+3. Open System Settings → Privacy & Security. In the Security section, click **Open Anyway** next to the message about Kap, and then confirm. As an alternative, run this command in Terminal:
+
+   ```sh
+   xattr -dr com.apple.quarantine /Applications/Kap.app
+   ```
+
+4. Open Kap again. When Kap asks for screen recording access, open System Settings → Privacy & Security → Screen & System Audio Recording and turn on Kap. If the list has an old Kap entry, remove it first.
+5. Quit Kap and open it again. macOS applies the screen recording permission only after a restart.
+6. Click the Kap icon in the menu bar to record. If you turn on audio recording, allow microphone access when Kap asks.
+
+Kap does not update itself. To update, quit Kap and install the new DMG in the same way. If the new build has the same signature, Kap keeps its screen recording permission.
 
 ### Build and install
 
@@ -36,6 +55,8 @@ To choose the signing identity, set `CSC_NAME`. If the Apple timestamp service i
 ```sh
 CSC_NAME="Your Name (TEAMID)" volta run --node 16 --yarn 1 yarn electron-builder --dir -c.mac.timestamp=none
 ```
+
+To make a DMG for other people, run `yarn dist` instead of `yarn run pack`. It writes `dist/Kap-<version>-arm64.dmg` and a ZIP file with the same app. The DMG is notarized only when the `APPLE_ID`, `APPLE_ID_PASSWORD` and `APPLE_TEAM_ID` environment variables are set and the app is signed with a Developer ID certificate. Without notarization, people must use the steps in [Install from the DMG](#install-from-the-dmg).
 
 ### After you install a new build
 
